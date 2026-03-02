@@ -20,8 +20,7 @@ services:
       - "8000:8000"
     env_file: .env
     volumes:
-      - C:/Users/krish/PROJECTS/M5/3-BOOSTING-TREES-RMSSE-0.98:/app/data/models:ro
-      - C:/Users/krish/PROJECTS/M5:/app/data/m5:ro
+      - ${MODELS_PATH}:/app/data/models:ro
       - ./backend/app:/app/app
     depends_on:
       postgres:
