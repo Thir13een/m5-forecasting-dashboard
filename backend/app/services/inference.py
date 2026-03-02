@@ -8,11 +8,7 @@ LEAD_TIME = 7
 
 
 def run_full_pipeline(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Takes a fully feature-engineered DataFrame.
-    Returns (forecast_df, inventory_df).
-    """
-    # Use the last row per item as the forecast origin
+    # last row per item = forecast origin
     origin = df.sort_values("day_int").groupby("item_id").last().reset_index()
 
     predictions = ModelStore.predict(origin)
@@ -36,7 +32,7 @@ def _compute_inventory(forecast_df: pd.DataFrame, origin: pd.DataFrame) -> pd.Da
         how="left",
     )
 
-    # Parse item_id: "FOODS_1_001_CA_1" → category, dept, sku_id, state, store
+    # parse item_id → category, dept, sku_id, state, store
     parts = df["item_id"].str.split("_")
     df["category"] = parts.str[0]
     df["dept"]     = parts.str[0] + "_" + parts.str[1]

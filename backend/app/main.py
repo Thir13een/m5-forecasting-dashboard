@@ -18,10 +18,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("=== M5 Forecasting System starting ===")
 
-    # Load 4 LightGBM models (large files — takes ~30s)
     ModelStore.load(settings.model_dir)
-
-    # Pre-load existing CSV outputs so dashboard works immediately
     inventory_df, forecast_df = load_demo_state(settings.data_dir)
     state.set_state(inventory_df, forecast_df, source="demo data")
 

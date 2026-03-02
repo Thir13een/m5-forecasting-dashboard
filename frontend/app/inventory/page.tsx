@@ -21,7 +21,6 @@ const RB: React.CSSProperties = { fontFamily: "'Roboto', sans-serif" };
 
 function formatLastUpdated(raw: string | null): { date: string; source: string } {
   if (!raw) return { date: "—", source: "unknown" };
-  // format: "2026-03-01T15:30:00.123456Z (demo data)"
   const match = raw.match(/^(.+?)\s*\((.+?)\)$/);
   const iso = match ? match[1] : raw;
   const source = match ? match[2] : "upload";
