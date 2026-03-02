@@ -130,32 +130,75 @@ Day 1       Day 7       Day 14      Day 28
 
 Each model is a **direct forecaster** — it predicts the actual sales value at that specific future day (`y_t+h`), not a cumulative total. The anchor horizons (1, 7, 14, 28) were chosen to align with natural demand cycles: daily fluctuation, weekly rhythm, bi-weekly patterns, and monthly trends.
 
-**For the 24 intermediate days** that lie between anchors, we apply **linear interpolation** between the adjacent anchor predictions:
+**For the 24 intermediate days** between anchors, we do not apply naive linear interpolation directly on the raw predictions. Raw predictions encode a day-of-week seasonal pattern — Mondays sell differently from Saturdays. Interpolating raw values would mix trend and seasonality, producing distorted intermediate forecasts.
+
+Instead, we apply a three-step **deseason → interpolate → reseason** procedure using empirically learned per-item weekday weights.
+
+---
+
+#### Step 1 — Learn per-item day-of-week weights
+
+For each item, look back 56 days from the forecast origin and compute the mean sales per weekday, then normalise by the item's overall mean:
+
+$$w_{i,k} = \frac{\bar{y}_{i,k}}{\bar{y}_i + \epsilon}, \quad k \in \{0,1,...,6\}$$
+
+where $\bar{y}_{i,k}$ is the mean sales for item $i$ on weekday $k$ over the past 56 days, and $\bar{y}_i$ is the item's overall mean across all weekdays. $\epsilon = 10^{-6}$ prevents division by zero.
+
+This gives a **7-element shape vector per item** — the relative demand multiplier for each day of week. For example, a FOODS item might have $w_{\text{Saturday}} = 1.8$ and $w_{\text{Tuesday}} = 0.7$, reflecting a weekend spike.
+
+---
+
+#### Step 2 — Deseason the anchor predictions
+
+Each anchor prediction captures both the underlying trend and the seasonality of that specific anchor day. To interpolate only the trend, we remove the weekday effect from each anchor:
+
+$$\tilde{y}_{i,a} = \frac{\hat{y}_{i,a}}{w_{i,\text{wday}(a)}}$$
+
+where $\hat{y}_{i,a}$ is the model's prediction at anchor position $a \in \{0, 6, 13, 27\}$ (i.e. days 1, 7, 14, 28), and $w_{i,\text{wday}(a)}$ is the weekday weight for whatever day of week that anchor lands on. This yields $\tilde{y}_{i,a}$ — the **deseasoned base trend** at each anchor.
+
+---
+
+#### Step 3 — Interpolate the base trend
+
+With seasonality removed, the base trend between any two adjacent anchors $a$ and $b$ is assumed to evolve linearly:
+
+$$\tilde{y}_{i,d} = \tilde{y}_{i,a}\,(1 - r) + \tilde{y}_{i,b}\,r, \qquad r = \frac{d - a}{b - a}$$
+
+for every intermediate day $d \in [a, b]$. This is applied across the three segments:
+
+| Segment | Anchors |
+|---|---|
+| Days 1 → 7 | $a = 0,\ b = 6$ |
+| Days 7 → 14 | $a = 6,\ b = 13$ |
+| Days 14 → 28 | $a = 13,\ b = 27$ |
+
+---
+
+#### Step 4 — Reseason the interpolated values
+
+Finally, multiply each intermediate day's deseasoned estimate back by its own weekday weight:
+
+$$\hat{y}_{i,d} = \tilde{y}_{i,d} \times w_{i,\text{wday}(d)}$$
+
+This reapplies the correct day-of-week seasonal multiplier for each specific future date, giving a forecast that respects both the trend trajectory across the 28-day window and the weekly demand rhythm of each individual item.
+
+---
+
+**The result** is a complete 28-day forecast per item that reflects the right weekday shape at every point — not just a flat interpolation, but a seasonality-aware curve built from 4 trained anchor models and 56 days of per-item weekday behaviour.
+
+For a FOODS item with a strong weekend spike:
 
 ```
-Days 2–6  →  lerp(pred_h01, pred_h07)   — between day-1 and week-1 anchors
-Days 8–13 →  lerp(pred_h07, pred_h14)   — between week-1 and week-2 anchors
-Days 15–27→  lerp(pred_h14, pred_h28)   — between week-2 and month anchors
-```
-
-For example, for a given SKU with predictions `h1=0.94`, `h7=1.21`, `h14=1.08`, `h28=1.17`:
-
-```
-Day  1:  0.94   (anchor)
-Day  2:  0.98   (lerp)
-Day  3:  1.03   (lerp)
-Day  4:  1.07   (lerp)
-Day  5:  1.12   (lerp)
-Day  6:  1.16   (lerp)
-Day  7:  1.21   (anchor)
-Day  8:  1.19   (lerp)
+Day  1 (Mon):  0.94  × 0.70 = 0.66   (anchor, deseasoned then reseasoned)
+Day  2 (Tue):  0.98  × 0.65 = 0.64   (interpolated trend × Tue weight)
+Day  3 (Wed):  1.03  × 0.72 = 0.74
+Day  4 (Thu):  1.07  × 0.75 = 0.80
+Day  5 (Fri):  1.12  × 1.20 = 1.34
+Day  6 (Sat):  1.16  × 1.85 = 2.15   (weekend spike restored)
+Day  7 (Sun):  1.21  × 1.60 = 1.94   (anchor)
 ...
-Day 14:  1.08   (anchor)
-...
-Day 28:  1.17   (anchor)
+Day 28:        1.17  (anchor)
 ```
-
-This gives a smooth demand curve across all 28 days using only 4 trained models — a clean trade-off between model count and forecast granularity.
 
 ---
 
