@@ -134,8 +134,6 @@ Each model is a **direct forecaster** — it predicts the actual sales value at 
 
 Instead, we apply a three-step **deseason → interpolate → reseason** procedure using empirically learned per-item weekday weights.
 
----
-
 #### Step 1 — Learn per-item day-of-week weights
 
 For each item, look back 56 days from the forecast origin and compute the mean sales per weekday, then normalise by the item's overall mean:
@@ -146,17 +144,13 @@ where $\bar{y}_{i,k}$ is the mean sales for item $i$ on weekday $k$ over the pas
 
 This gives a **7-element shape vector per item** — the relative demand multiplier for each day of week. For example, a FOODS item might have $w_{\text{Saturday}} = 1.8$ and $w_{\text{Tuesday}} = 0.7$, reflecting a weekend spike.
 
----
-
 #### Step 2 — Deseason the anchor predictions
 
 Each anchor prediction captures both the underlying trend and the seasonality of that specific anchor day. To interpolate only the trend, we remove the weekday effect from each anchor:
 
 $$\tilde{y}_{i,a} = \frac{\hat{y}_{i,a}}{w_{i,\text{wday}(a)}}$$
 
-where $\hat{y}_{i,a}$ is the model's prediction at anchor position $a \in \{0, 6, 13, 27\}$ (i.e. days 1, 7, 14, 28), and $w_{i,\text{wday}(a)}$ is the weekday weight for whatever day of week that anchor lands on. This yields $\tilde{y}_{i,a}$ — the **deseasoned base trend** at each anchor.
-
----
+where $\hat{y}_{i,a}$ is the model's prediction at anchor position $a \in \{0, 6, 13, 27\}$ (i.e. days 1, 7, 14, 28), and $w_{i,\text{wday}(a)}$ is the weekday weight for the day of week that anchor falls on. This yields $\tilde{y}_{i,a}$ — the **deseasoned base trend** at each anchor.
 
 #### Step 3 — Interpolate the base trend
 
@@ -164,40 +158,38 @@ With seasonality removed, the base trend between any two adjacent anchors $a$ an
 
 $$\tilde{y}_{i,d} = \tilde{y}_{i,a}\,(1 - r) + \tilde{y}_{i,b}\,r, \qquad r = \frac{d - a}{b - a}$$
 
-for every intermediate day $d \in [a, b]$. This is applied across the three segments:
+for every intermediate day $d \in [a, b]$, applied across the three segments:
 
-| Segment | Anchors |
+| Segment | Anchor positions (0-indexed) |
 |---|---|
 | Days 1 → 7 | $a = 0,\ b = 6$ |
 | Days 7 → 14 | $a = 6,\ b = 13$ |
 | Days 14 → 28 | $a = 13,\ b = 27$ |
 
----
-
 #### Step 4 — Reseason the interpolated values
 
-Finally, multiply each intermediate day's deseasoned estimate back by its own weekday weight:
+Finally, multiply each day's deseasoned estimate back by its own weekday weight:
 
 $$\hat{y}_{i,d} = \tilde{y}_{i,d} \times w_{i,\text{wday}(d)}$$
 
-This reapplies the correct day-of-week seasonal multiplier for each specific future date, giving a forecast that respects both the trend trajectory across the 28-day window and the weekly demand rhythm of each individual item.
+This reapplies the correct seasonal multiplier for each specific future date, giving a forecast that respects both the trend trajectory across 28 days and the weekly demand rhythm of each individual item. Note that for anchor days themselves, deseasoning and reseasoning cancel — the final value always equals the original model prediction.
 
----
-
-**The result** is a complete 28-day forecast per item that reflects the right weekday shape at every point — not just a flat interpolation, but a seasonality-aware curve built from 4 trained anchor models and 56 days of per-item weekday behaviour.
-
-For a FOODS item with a strong weekend spike:
+**The result** is a complete 28-day forecast per item — not a flat interpolation, but a seasonality-aware curve built from 4 trained models and 56 days of per-item weekday behaviour.
 
 ```
-Day  1 (Mon):  0.94  × 0.70 = 0.66   (anchor, deseasoned then reseasoned)
-Day  2 (Tue):  0.98  × 0.65 = 0.64   (interpolated trend × Tue weight)
-Day  3 (Wed):  1.03  × 0.72 = 0.74
-Day  4 (Thu):  1.07  × 0.75 = 0.80
-Day  5 (Fri):  1.12  × 1.20 = 1.34
-Day  6 (Sat):  1.16  × 1.85 = 2.15   (weekend spike restored)
-Day  7 (Sun):  1.21  × 1.60 = 1.94   (anchor)
+                   anchor             interpolated (base trend × weekday weight)
+                     ↓                          ↓
+Day  1 (Mon):  0.94               (h=1 anchor, returns exactly to model prediction)
+Day  2 (Tue):  base_trend × 0.65  (Tue is a slow day — weight pulls forecast down)
+Day  3 (Wed):  base_trend × 0.72
+Day  4 (Thu):  base_trend × 0.75
+Day  5 (Fri):  base_trend × 1.20  (Fri picks up — weight lifts forecast)
+Day  6 (Sat):  base_trend × 1.85  (weekend spike fully restored by weight)
+Day  7 (Sun):  1.21               (h=7 anchor, returns exactly to model prediction)
 ...
-Day 28:        1.17  (anchor)
+Day 14:        1.08               (h=14 anchor)
+...
+Day 28:        1.17               (h=28 anchor)
 ```
 
 ---
@@ -516,7 +508,7 @@ This project was deliberately built to demonstrate end-to-end ML engineering —
 
 **No data leakage** — every rolling feature is computed on `y_lag_1` (the previous day's sales), not the current day. This is a common mistake in time series ML that inflates validation scores. We enforced strict temporal discipline throughout.
 
-**Efficient multi-horizon design** — instead of training 28 models (one per forecast day), we designed a 4-anchor system that covers the full 28-day horizon with linear interpolation. This reduced training compute by 7× while preserving accuracy at key business horizons (day 1, week 1, week 2, month 1).
+**Efficient multi-horizon design** — instead of training 28 models (one per forecast day), we designed a 4-anchor system that covers the full 28-day horizon using a seasonality-aware deseason → interpolate → reseason procedure. This reduced training compute by 7× while preserving accuracy at key business horizons (day 1, week 1, week 2, month 1).
 
 **Business logic on top of ML** — raw predictions alone aren't useful to operations teams. We layered safety stock calculations (90% service level, square-root lead-time scaling), reorder point formulas, and priority classification (CRITICAL / WARNING / OK) on top of the model outputs to produce actionable recommendations.
 
