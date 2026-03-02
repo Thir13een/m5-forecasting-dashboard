@@ -2,7 +2,7 @@ import json
 import logging
 from typing import AsyncGenerator
 
-from openai import AsyncOpenAI
+from groq import AsyncGroq
 
 import app.state as state
 from app.config import settings
@@ -157,9 +157,8 @@ async def stream_chat(
     message: str,
     history: list[dict],
 ) -> AsyncGenerator[str, None]:
-    client = AsyncOpenAI(
+    client = AsyncGroq(
         api_key=settings.groq_api_key,
-        base_url="https://api.groq.com/openai/v1",
     )
 
     messages = [{"role": "system", "content": _build_system_prompt()}]
