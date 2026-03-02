@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+/* Base: Roboto for all body/table/description text */
+body {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  background-color: #f3f4f6;
+  color: #111827;
+  margin: 0;
+}
+
+/* Google Sans for headings, labels, bold UI elements */
+h1, h2, h3, h4, h5, h6,
+.fw-bold, .fw-semibold,
+.font-bold, .font-semibold {
+  font-family: 'Google Sans', 'Roboto', sans-serif;
+}
+
+/* Card titles, nav, stat values — Google Sans */
+.gs {
+  font-family: 'Google Sans', 'Roboto', sans-serif;
+}
+
+/* Inset the simplebar vertical track inside rounded dropdown menus
+   so the scrollbar thumb isn't clipped by the border-radius corners */
+.sel__menu .simplebar-track.simplebar-vertical {
+  top: 8px;
+  bottom: 8px;
+}
+
+/* Spinner animation for chat thinking state */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive layout ──────────────────────────────────────────── */
+
+/* Shrink chat panel on medium screens */
+@media (max-width: 1099px) {
+  .chat-panel { width: 300px !important; }
+}
+
+/* Hide chat panel entirely on small screens */
+@media (max-width: 899px) {
+  .chat-panel  { display: none !important; }
+  .chat-divider { display: none !important; }
+}
+
+/* Hide header subtitle on very small screens */
+@media (max-width: 639px) {
+  .header-subtitle { display: none; }
+  .header-title { font-size: 16px !important; }
+}
