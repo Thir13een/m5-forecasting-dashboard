@@ -7,10 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_demo_state(data_dir: str) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Pre-load existing inventory_plan.csv and forecast.csv from the model output directory.
-    Returns (inventory_df, forecast_df). Falls back to empty DataFrames if files missing.
-    """
+    """Load inventory_plan.csv and forecast.csv from model dir. Returns empty DataFrames if missing."""
     path = Path(data_dir)
 
     inv_path = path / "inventory_plan.csv"

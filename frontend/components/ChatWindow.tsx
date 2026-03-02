@@ -122,19 +122,16 @@ export default function ChatWindow() {
     if (!text.trim() || streaming) return;
     const userMsg: ChatMessage = { role: "user", content: text };
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
-    // Add user message + empty assistant placeholder (shows spinner)
     setMessages((prev) => [...prev, userMsg, { role: "assistant", content: "" }]);
     setInput("");
     setStreaming(true);
 
-    // Buffer everything — only render once fully received
     let buffer = "";
     try {
       for await (const chunk of streamChat(text, history)) {
         buffer += chunk;
       }
     } finally {
-      // Swap spinner for the complete message in one update
       setMessages((prev) => {
         const next = [...prev];
         next[next.length - 1] = { role: "assistant", content: buffer };
@@ -207,7 +204,6 @@ export default function ChatWindow() {
                 >
                   {m.role === "assistant" ? (
                     m.content === "" && streaming && i === messages.length - 1 ? (
-                      // Thinking spinner
                       <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 0" }}>
                         <span style={{
                           width: 18, height: 18, borderRadius: "50%",

@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
 
-        {/* ── Header ─────────────────────────────────────────────────── */}
+        {/* Header */}
         <header
           className="sticky-top bg-white border-bottom"
           style={{ height: 68, zIndex: 40, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
@@ -56,10 +56,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
 
-        {/* ── Main split layout ───────────────────────────────────────── */}
+        {/* Main layout: inventory (left) + chat (right) */}
         <div className="d-flex" style={{ height: "calc(100vh - 68px)", overflow: "hidden" }}>
 
-          {/* Left panel — Inventory dashboard (scrollable) */}
+          {/* Inventory panel */}
           <div className="flex-grow-1" style={{ minWidth: 0, overflow: "hidden" }}>
             <ScrollArea>
               <div style={{ padding: "20px 24px" }}>
@@ -109,7 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
 
-            {/* Chat window fills remaining height */}
+            {/* Chat */}
             <div className="flex-grow-1 overflow-hidden">
               <ChatWindow />
             </div>

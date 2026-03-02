@@ -40,15 +40,14 @@ def validate_columns(df: pd.DataFrame) -> list[str]:
 def build_features(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.rename(columns=RENAME).copy()
 
-    # day integer
     df["day_int"] = df["day_id"].str.extract(r"(\d+)").astype(int)
     df = df.sort_values(["item_id", "day_int"]).reset_index(drop=True)
 
-    # lag features (grouped by item)
+    # lags
     for lag in LAGS:
         df[f"y_lag_{lag}"] = df.groupby("item_id")["y"].shift(lag)
 
-    # rolling features computed on lag-1 (no lookahead)
+    # rolling features on lag-1 (no lookahead)
     y_lag1 = df.groupby("item_id")["y"].shift(1)
     for w in ROLL_MEAN:
         df[f"y_roll_mean_{w}"] = (
@@ -62,15 +61,14 @@ def build_features(raw_df: pd.DataFrame) -> pd.DataFrame:
         y_lag1.groupby(df["item_id"]).transform(lambda s: s.rolling(28, min_periods=1).median())
     )
 
-    # days_since_last_sale
-    last_nonzero = df["y"].where(df["y"] > 0)
+    # days since last sale
     df["_last_nz_day"] = df.groupby("item_id").apply(
         lambda g: g["day_int"].where(g["y"] > 0).ffill()
     ).reset_index(level=0, drop=True)
     df["days_since_last_sale"] = (df["day_int"] - df["_last_nz_day"]).fillna(df["day_int"])
     df.drop(columns=["_last_nz_day"], inplace=True)
 
-    # zero rate and nonzero count over 28-day window
+    # zero rate and nonzero count (28-day)
     df["zero_rate_28"] = (
         y_lag1.groupby(df["item_id"]).transform(
             lambda s: s.rolling(28, min_periods=1).apply(lambda x: (x == 0).mean())

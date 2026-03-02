@@ -29,7 +29,7 @@ def _build_system_prompt() -> str:
     out_3days  = int((inv["days_until_stockout"] < 3).sum())
     out_7days  = int((inv["days_until_stockout"] < 7).sum())
 
-    # ── Top 15 by order quantity (ALL items — matches grid) ──────────────
+    # top 15 by order qty (all statuses)
     top_by_qty = inv.nlargest(15, "order_qty")[
         ["item_id", "store", "category", "order_qty", "days_until_stockout", "avg_daily_demand", "priority"]
     ]
@@ -42,7 +42,7 @@ def _build_system_prompt() -> str:
             f"Daily sales: {r['avg_daily_demand']:.2f} | Status: {r['priority']}\n"
         )
 
-    # ── Top 15 CRITICAL items by order quantity ───────────────────────────
+    # top 15 critical items
     crit_df = inv[inv["priority"] == "CRITICAL"]
     top_urgent_rows = "| Item ID | Store | Category | Units to Order | Days Left | Daily Sales |\n"
     top_urgent_rows += "|---|---|---|---|---|---|\n"
@@ -59,7 +59,7 @@ def _build_system_prompt() -> str:
     else:
         top_urgent_rows += "| (no CRITICAL items) | | | | | |\n"
 
-    # ── Per-store full breakdown (all items) ─────────────────────────────
+    # per-store breakdown
     store_all = (
         inv.groupby("store")
         .agg(
@@ -79,7 +79,7 @@ def _build_system_prompt() -> str:
             f"{int(r['total_order']):,} | {int(r['critical'])} | {int(r['warning'])} |\n"
         )
 
-    # ── Per-category breakdown ────────────────────────────────────────────
+    # per-category breakdown
     cat_stats = (
         inv.groupby("category")
         .agg(
