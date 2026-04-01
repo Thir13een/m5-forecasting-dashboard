@@ -1,3 +1,5 @@
+[![Krish](https://img.shields.io/badge/Krish-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Thir13een) [![Shweta](https://img.shields.io/badge/Shweta-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/shwetabankar54)
+
 <div align="center">
 
 <img src="https://img.shields.io/badge/M5-Demand%20Forecasting-2563eb?style=for-the-badge&logoColor=white" height="40"/>
@@ -567,19 +569,3 @@ Built in **2 weeks** by
 
 
 <br/>
-
-<div align="center">
-
-<h3>🤝 Built By</h3>
-
-<a href="https://github.com/Thir13een">
-  <img src="https://github.com/Thir13een.png" width="70" style="border-radius:50%"/>
-  <br/><sub><b>Krish</b></sub>
-</a>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://github.com/shwetabankar54">
-  <img src="https://github.com/shwetabankar54.png" width="70" style="border-radius:50%"/>
-  <br/><sub><b>Shweta</b></sub>
-</a>
-
-</div>
