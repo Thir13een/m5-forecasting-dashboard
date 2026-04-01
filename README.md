@@ -557,3 +557,10 @@ Built in **2 weeks** by
 [![GitHub](https://img.shields.io/badge/GitHub-shwetabankar54-181717?style=flat-square&logo=github)](https://github.com/shwetabankar54)
 
 </div>
+
+## 👥 Team
+
+| Member | GitHub |
+|---|---|
+| Krish | [@Thir13een](https://github.com/Thir13een) |
+| Shweta | [@shwetabankar54](https://github.com/shwetabankar54) |
