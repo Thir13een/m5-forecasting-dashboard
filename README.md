@@ -1,5 +1,3 @@
-[![Krish](https://img.shields.io/badge/Krish-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Thir13een) [![Shweta](https://img.shields.io/badge/Shweta-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/shwetabankar54)
-
 <div align="center">
 
 <img src="https://img.shields.io/badge/M5-Demand%20Forecasting-2563eb?style=for-the-badge&logoColor=white" height="40"/>
@@ -7,6 +5,9 @@
 # M5 Demand Forecasting Dashboard
 
 ### AI-powered retail inventory intelligence — predict demand, prevent stockouts, automate reorders
+
+
+**🤝 Built by**   [![Krish](https://img.shields.io/badge/Krish-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Thir13een) [![Shweta](https://img.shields.io/badge/Shweta-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/shwetabankar54)
 
 <br/>
 
